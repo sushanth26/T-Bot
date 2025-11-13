@@ -1,0 +1,139 @@
+/* Grok AI Insights */
+.grok-insights {
+  background: linear-gradient(135deg, #f5f5f5 0%, #ffffff 100%);
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 16px;
+  border: 2px solid #e8eaed;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.grok-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #1967d2;
+}
+
+.grok-logo {
+  font-size: 14px;
+  font-weight: 700;
+  color: #202124;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.grok-confidence {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 12px;
+  background: #f1f3f4;
+}
+
+/* Sentiment Badge */
+.grok-sentiment {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  font-weight: 700;
+}
+
+.grok-sentiment.bullish {
+  background: linear-gradient(135deg, #e6f4ea 0%, #d4f1e1 100%);
+  border: 2px solid #0f9d58;
+  color: #0f9d58;
+}
+
+.grok-sentiment.bearish {
+  background: linear-gradient(135deg, #fce8e6 0%, #fad2cf 100%);
+  border: 2px solid #d93025;
+  color: #d93025;
+}
+
+.grok-sentiment.neutral {
+  background: linear-gradient(135deg, #f1f3f4 0%, #e8eaed 100%);
+  border: 2px solid #80868b;
+  color: #80868b;
+}
+
+.sentiment-icon {
+  font-size: 20px;
+}
+
+.sentiment-text {
+  font-size: 13px;
+  letter-spacing: 0.5px;
+}
+
+/* Sections */
+.grok-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #5f6368;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.grok-summary {
+  margin-bottom: 12px;
+}
+
+.grok-summary p {
+  font-size: 12px;
+  line-height: 1.6;
+  color: #202124;
+  margin: 0;
+}
+
+.grok-key-points,
+.grok-trading-signals {
+  margin-bottom: 12px;
+}
+
+.grok-key-points ul,
+.grok-trading-signals ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.grok-key-points li,
+.grok-trading-signals li {
+  font-size: 11px;
+  line-height: 1.5;
+  color: #202124;
+  margin-bottom: 6px;
+}
+
+.grok-trading-signals li {
+  font-weight: 600;
+  color: #1967d2;
+}
+
+/* Footer */
+.grok-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid #e8eaed;
+  font-size: 9px;
+  color: #80868b;
+}
+
+.grok-powered {
+  font-weight: 600;
+}
+
+.grok-disclaimer {
+  font-style: italic;
+}
+
