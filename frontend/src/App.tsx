@@ -2,20 +2,22 @@ import { useState, useEffect } from 'react'
 import './App.css'
 import StockCard from './components/StockCard'
 import StockSearch from './components/StockSearch'
-import ConnectionStatus from './components/ConnectionStatus'
 import GrokInsights from './components/GrokInsights'
-import { StockData, ConnectionStatus as ConnStatus } from './types'
-import { StockInfoSkeleton, EMAListSkeleton, NewsSkeleton, TopNewsSkeleton } from './components/Skeleton'
+import SectorInfo from './components/SectorInfo'
+import { StockData } from './types'
+import { StockInfoSkeleton, EMAListSkeleton } from './components/Skeleton'
+import { useGrokStream } from './hooks/useGrokStream'
 
 function App() {
   const [currentSymbol, setCurrentSymbol] = useState('TSLA')
   const [stockData, setStockData] = useState<Record<string, StockData>>({})
-  const [connectionStatus, setConnectionStatus] = useState<ConnStatus>('connected')
+  
+  // Use streaming hook for Grok analysis
+  const { analysis: grokAnalysis, streamingText, isStreaming } = useGrokStream(currentSymbol)
 
   // Fetch data for current symbol every 2 seconds
   useEffect(() => {
     const fetchQuotes = () => {
-      setConnectionStatus('connecting')
       fetch(`http://localhost:8000/api/quotes/${currentSymbol}`)
         .then((res) => {
           if (!res.ok) throw new Error('Failed to fetch')
@@ -28,11 +30,9 @@ function App() {
               lastUpdate: Date.now(),
             }
           })
-          setConnectionStatus('connected')
         })
         .catch((err) => {
           console.error('Failed to fetch quotes:', err)
-          setConnectionStatus('error')
         })
     }
     
@@ -58,7 +58,6 @@ function App() {
             <span className="title-icon">📈</span>
             Stock Monitor
           </h1>
-          <ConnectionStatus status={connectionStatus} />
         </div>
       </header>
 
@@ -71,19 +70,29 @@ function App() {
           
           {/* Stock Info Section */}
           {stockData[currentSymbol] && stockData[currentSymbol].price > 0 ? (
-            <div className="stock-info-sidebar">
-              <StockCard
-                key={`info-${currentSymbol}`}
-                symbol={currentSymbol}
-                data={stockData[currentSymbol]}
-                showOnlyInfo={true}
-              />
+            <>
+              <div className="stock-info-sidebar">
+                <StockCard
+                  key={`info-${currentSymbol}`}
+                  symbol={currentSymbol}
+                  data={stockData[currentSymbol]}
+                  showOnlyInfo={true}
+                />
+              </div>
               
-              {/* Grok AI Insights */}
-              {stockData[currentSymbol].grokAnalysis && (
-                <GrokInsights analysis={stockData[currentSymbol].grokAnalysis} />
+              {/* Sector Analysis Section */}
+              {stockData[currentSymbol].sectorAnalysis && 
+               (stockData[currentSymbol].sectorAnalysis?.pe_ratio || 
+                stockData[currentSymbol].sectorAnalysis?.lowest_pe_peers?.length) && (
+                <div className="sector-info-sidebar">
+                  <SectorInfo
+                    analysis={stockData[currentSymbol].sectorAnalysis}
+                    sector={stockData[currentSymbol].sector}
+                    industry={stockData[currentSymbol].industry}
+                  />
+                </div>
               )}
-            </div>
+            </>
           ) : (
             <div className="stock-info-sidebar">
               <StockInfoSkeleton />
@@ -101,88 +110,34 @@ function App() {
                 showOnlyEmas={true}
               />
               
-              {/* Latest News Section - Moved under All Levels */}
-              <div className="regular-news-section">
-                <div className="news-sidebar-header">📰 Latest News</div>
-                {stockData[currentSymbol]?.news && stockData[currentSymbol].news.length > 0 ? (
-                  <div className="news-sidebar-list">
-                    {stockData[currentSymbol].news.map((article, index) => (
-                      <a 
-                        key={`news-${index}`}
-                        href={article.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="news-sidebar-item"
-                      >
-                        <div className="news-sidebar-title">{article.title}</div>
-                        {article.description && (
-                          <div className="news-sidebar-description">{article.description}</div>
-                        )}
-                        <div className="news-sidebar-meta">
-                          <span className="news-sidebar-source">{article.source}</span>
-                          <span className="news-sidebar-date">
-                            {new Date(article.published_at).toLocaleString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                              hour: 'numeric',
-                              minute: '2-digit',
-                            })}
-                          </span>
-                        </div>
-                      </a>
-                    ))}
-                  </div>
-                ) : (
-                  <NewsSkeleton count={5} />
-                )}
-              </div>
+              {/* News hidden - Grok analyzes it behind the scenes */}
             </>
           ) : (
-            <>
-              <EMAListSkeleton />
-              <div className="regular-news-section">
-                <div className="news-sidebar-header">📰 Latest News</div>
-                <NewsSkeleton count={5} />
-              </div>
-            </>
+            <EMAListSkeleton />
           )}
         </div>
 
-        <div className="news-sidebar">
-          {/* Top News Section - Only in 3rd Column */}
-          <div className="news-sidebar-header top-news-header">🔥 Top News (Upgrades/Analyst Ratings)</div>
-          {stockData[currentSymbol]?.topNews && stockData[currentSymbol].topNews.length > 0 ? (
-            <div className="news-sidebar-list">
-              {stockData[currentSymbol].topNews.map((article, index) => (
-                <a 
-                  key={`top-${index}`}
-                  href={article.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="news-sidebar-item top-news-item"
-                >
-                  <div className="news-sidebar-title">{article.title}</div>
-                  {article.description && (
-                    <div className="news-sidebar-description">{article.description}</div>
-                  )}
-                  <div className="news-sidebar-meta">
-                    <span className="news-sidebar-source">{article.source}</span>
-                    <span className="news-sidebar-date">
-                      {new Date(article.published_at).toLocaleString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        hour: 'numeric',
-                        minute: '2-digit',
-                      })}
-                    </span>
-                  </div>
-                </a>
-              ))}
+        <div className="grok-sidebar">
+          {/* Grok AI Insights - use cached first, then streaming */}
+          {isStreaming ? (
+            <div className="grok-loading-container">
+              <div className="grok-loading">
+                <div className="grok-logo-large">🤖</div>
+                <div>Analyzing news with Grok AI...</div>
+                {streamingText && (
+                  <div className="streaming-text">{streamingText}</div>
+                )}
+              </div>
             </div>
-          ) : stockData[currentSymbol] && stockData[currentSymbol].price > 0 ? (
-            <div className="news-sidebar-empty">No analyst ratings or upgrades in last 7 days</div>
+          ) : (grokAnalysis || stockData[currentSymbol]?.grokAnalysis) ? (
+            <GrokInsights analysis={grokAnalysis || stockData[currentSymbol]?.grokAnalysis!} />
           ) : (
-            <TopNewsSkeleton />
+            <div className="grok-loading-container">
+              <div className="grok-loading">
+                <div className="grok-logo-large">🤖</div>
+                <div>Loading Grok analysis...</div>
+              </div>
+            </div>
           )}
         </div>
       </main>

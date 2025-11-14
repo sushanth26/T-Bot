@@ -7,6 +7,7 @@ from services.news_service import get_cached_news
 from services.crossover_service import detect_premarket_crossovers
 from services.premarket_service import get_premarket_levels
 from services.grok_service import get_cached_grok_analysis
+from services.sector_analysis_service import analyze_sector_position
 
 
 def get_company_info(symbol: str) -> dict:
@@ -164,16 +165,65 @@ def fetch_stock_data(symbol: str):
             "logoUrl": company_info['logoUrl']
         }
         
-        # Get news (cached) - returns dict with top_news and regular_news
+        # Get news (cached) - ONLY for Grok analysis, not returned to UI
         news_data = get_cached_news(symbol)
-        result["topNews"] = news_data.get('top_news', [])
-        result["news"] = news_data.get('regular_news', [])
         
         # Get Grok AI analysis of news (if news available)
         grok_analysis = {}
         if news_data.get('top_news') or news_data.get('regular_news'):
             grok_analysis = get_cached_grok_analysis(symbol, news_data)
         result["grokAnalysis"] = grok_analysis
+        
+        # Sector analysis with P/E ratio (CACHED - 24 hours to save API calls)
+        sector_cache_key = f"{symbol}_sector_analysis"
+        sector_analysis = {}
+        
+        # Check cache first (24 hour cache to save FMP API calls - only 250/day limit)
+        if sector_cache_key in CACHE:
+            cached_sector = CACHE[sector_cache_key]
+            from datetime import datetime
+            cache_age = (datetime.now() - cached_sector.get('timestamp', datetime.min)).total_seconds()
+            
+            # Use cache if less than 24 hours old
+            if cache_age < 86400:  # 24 hours = 86400 seconds
+                sector_analysis = cached_sector.get('data', {})
+                print(f"   💾 Using cached sector analysis (age: {cache_age/3600:.1f}h)")
+        
+        # If not in cache or expired, fetch new data
+        if not sector_analysis:
+            print(f"   📊 Fetching sector analysis from FMP API...")
+            try:
+                # Get P/E ratio and peer analysis (no ETF required)
+                analysis = analyze_sector_position(symbol, None)
+                
+                # Extract relevant data
+                if not analysis.get('error'):
+                    financial_ratios = analysis.get('financial_ratios', {})
+                    sector_analysis = {
+                        'sector': financial_ratios.get('sector'),
+                        'industry': financial_ratios.get('industry'),
+                        'pe_ratio': financial_ratios.get('pe_ratio'),
+                        'peg_ratio': financial_ratios.get('peg_ratio'),
+                        'pb_ratio': financial_ratios.get('pb_ratio'),
+                        'market_cap': financial_ratios.get('market_cap'),
+                        'lowest_pe_peers': analysis.get('lowest_pe_peers', [])[:5]
+                    }
+                    
+                    # Cache for 24 hours
+                    from datetime import datetime
+                    CACHE[sector_cache_key] = {
+                        'data': sector_analysis,
+                        'timestamp': datetime.now()
+                    }
+                    
+                    if sector_analysis.get('pe_ratio'):
+                        print(f"   ✓ Sector analysis cached: P/E={sector_analysis.get('pe_ratio', 'N/A'):.2f}, {len(sector_analysis.get('lowest_pe_peers', []))} peers (API calls saved)")
+            except Exception as e:
+                print(f"   ⚠️  Sector analysis: {e}")
+        
+        result["sectorAnalysis"] = sector_analysis
+        
+        # DO NOT return news to frontend - only Grok analysis
         
         # Detect premarket EMA crossovers
         crossovers = detect_premarket_crossovers(symbol, price, emas)
@@ -185,11 +235,9 @@ def fetch_stock_data(symbol: str):
         # Log summary
         logo_status = "🖼️" if company_info['logoUrl'] else "⚡"
         crossover_status = f" | 🚨{len(crossovers)} alerts" if crossovers else ""
-        top_news_count = len(news_data.get('top_news', []))
-        regular_news_count = len(news_data.get('regular_news', []))
         pm_status = f" | PMH/PML: {len(premarket_levels)}" if premarket_levels else ""
-        grok_status = f" | 🤖 Grok: {grok_analysis.get('sentiment', 'N/A')}" if grok_analysis else ""
-        print(f"✅ {symbol} ${price} {logo_status} | Range: {day_range['dayLow']:.2f}-{day_range['dayHigh']:.2f} | EMAs: {len(emas)}{pm_status} | News: {top_news_count}/{regular_news_count}{grok_status}{crossover_status}")
+        grok_status = f" | 🤖 {grok_analysis.get('sentiment', 'N/A')}" if grok_analysis and grok_analysis.get('sentiment') else ""
+        print(f"✅ {symbol} ${price} {logo_status} | Range: {day_range['dayLow']:.2f}-{day_range['dayHigh']:.2f} | EMAs: {len(emas)}{pm_status}{grok_status}{crossover_status}")
         
         return result
     except Exception as e:

@@ -33,40 +33,4 @@ export const EMAListSkeleton = () => {
   )
 }
 
-export const NewsSkeleton = ({ count = 3 }: { count?: number }) => {
-  return (
-    <div className="skeleton-news-list">
-      {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="skeleton-news-item">
-          <div className="skeleton-text skeleton-title"></div>
-          <div className="skeleton-text skeleton-small"></div>
-          <div className="skeleton-text skeleton-small"></div>
-          <div className="skeleton-footer">
-            <div className="skeleton-text skeleton-tiny"></div>
-            <div className="skeleton-text skeleton-tiny"></div>
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-export const TopNewsSkeleton = () => {
-  return (
-    <div className="skeleton-news-list">
-      {[1, 2, 3].map((i) => (
-        <div key={i} className="skeleton-news-item skeleton-top-news-item">
-          <div className="skeleton-star">⭐</div>
-          <div className="skeleton-text skeleton-title"></div>
-          <div className="skeleton-text skeleton-small"></div>
-          <div className="skeleton-text skeleton-small"></div>
-          <div className="skeleton-footer">
-            <div className="skeleton-text skeleton-tiny"></div>
-            <div className="skeleton-text skeleton-tiny"></div>
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
 

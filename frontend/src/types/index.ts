@@ -26,13 +26,6 @@ export interface PivotPoints {
   s3?: number
 }
 
-export interface NewsArticle {
-  title: string
-  description: string
-  url: string
-  published_at: string
-  source: string
-}
 
 export interface Crossover {
   type: 'cross_above' | 'cross_below'
@@ -53,6 +46,21 @@ export interface GrokAnalysis {
   key_points: string[]
   trading_signals: string[]
   confidence: 'high' | 'medium' | 'low'
+}
+
+export interface SectorAnalysis {
+  sector?: string
+  industry?: string
+  etf_symbol?: string
+  weight_percentage?: number
+  pe_ratio?: number
+  peg_ratio?: number
+  pb_ratio?: number
+  market_cap?: number
+  lowest_pe_peers?: Array<{
+    symbol: string
+    pe_ratio: number
+  }>
 }
 
 export interface StockData {
@@ -79,11 +87,7 @@ export interface StockData {
   emas?: EMAs
   premarketLevels?: PremarketLevels
   pivots?: PivotPoints
-  topNews?: NewsArticle[]
-  news?: NewsArticle[]
   grokAnalysis?: GrokAnalysis
+  sectorAnalysis?: SectorAnalysis
   crossovers?: Crossover[]
 }
-
-export type ConnectionStatus = 'connecting' | 'connected' | 'disconnected' | 'error'
-
