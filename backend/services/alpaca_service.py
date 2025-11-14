@@ -6,6 +6,7 @@ from services.ema_service import get_all_emas
 from services.news_service import get_cached_news
 from services.crossover_service import detect_premarket_crossovers
 from services.premarket_service import get_premarket_levels
+from services.grok_service import get_cached_grok_analysis
 
 
 def get_company_info(symbol: str) -> dict:
@@ -168,6 +169,12 @@ def fetch_stock_data(symbol: str):
         result["topNews"] = news_data.get('top_news', [])
         result["news"] = news_data.get('regular_news', [])
         
+        # Get Grok AI analysis of news (if news available)
+        grok_analysis = {}
+        if news_data.get('top_news') or news_data.get('regular_news'):
+            grok_analysis = get_cached_grok_analysis(symbol, news_data)
+        result["grokAnalysis"] = grok_analysis
+        
         # Detect premarket EMA crossovers
         crossovers = detect_premarket_crossovers(symbol, price, emas)
         result["crossovers"] = crossovers
@@ -181,7 +188,8 @@ def fetch_stock_data(symbol: str):
         top_news_count = len(news_data.get('top_news', []))
         regular_news_count = len(news_data.get('regular_news', []))
         pm_status = f" | PMH/PML: {len(premarket_levels)}" if premarket_levels else ""
-        print(f"✅ {symbol} ${price} {logo_status} | Range: {day_range['dayLow']:.2f}-{day_range['dayHigh']:.2f} | EMAs: {len(emas)}{pm_status} | News: {top_news_count}/{regular_news_count}{crossover_status}")
+        grok_status = f" | 🤖 Grok: {grok_analysis.get('sentiment', 'N/A')}" if grok_analysis else ""
+        print(f"✅ {symbol} ${price} {logo_status} | Range: {day_range['dayLow']:.2f}-{day_range['dayHigh']:.2f} | EMAs: {len(emas)}{pm_status} | News: {top_news_count}/{regular_news_count}{grok_status}{crossover_status}")
         
         return result
     except Exception as e:

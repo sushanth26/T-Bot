@@ -47,6 +47,14 @@ export interface PremarketLevels {
   PML?: number  // Premarket Low
 }
 
+export interface GrokAnalysis {
+  sentiment: 'bullish' | 'bearish' | 'neutral'
+  summary: string
+  key_points: string[]
+  trading_signals: string[]
+  confidence: 'high' | 'medium' | 'low'
+}
+
 export interface StockData {
   symbol: string
   companyName?: string
@@ -73,6 +81,7 @@ export interface StockData {
   pivots?: PivotPoints
   topNews?: NewsArticle[]
   news?: NewsArticle[]
+  grokAnalysis?: GrokAnalysis
   crossovers?: Crossover[]
 }
 

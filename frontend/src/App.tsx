@@ -3,6 +3,7 @@ import './App.css'
 import StockCard from './components/StockCard'
 import StockSearch from './components/StockSearch'
 import ConnectionStatus from './components/ConnectionStatus'
+import GrokInsights from './components/GrokInsights'
 import { StockData, ConnectionStatus as ConnStatus } from './types'
 import { StockInfoSkeleton, EMAListSkeleton, NewsSkeleton, TopNewsSkeleton } from './components/Skeleton'
 
@@ -77,6 +78,11 @@ function App() {
                 data={stockData[currentSymbol]}
                 showOnlyInfo={true}
               />
+              
+              {/* Grok AI Insights */}
+              {stockData[currentSymbol].grokAnalysis && (
+                <GrokInsights analysis={stockData[currentSymbol].grokAnalysis} />
+              )}
             </div>
           ) : (
             <div className="stock-info-sidebar">
